@@ -60,10 +60,15 @@ def search_faq(query: str) -> str:
 
     return "\n".join(hits) or "No FAQ entry found. Consider a ticket."
 
-
 @mcp.tool()
 def create_ticket(title: str, owner: str, priority: Literal["low", "medium", "high"] = "medium", ) -> str:
     """Open a new IT support ticket for an employee. Returns the ticket ID."""
+
+    if not title.strip():
+        raise ToolError("title should not be empty.")
+
+    if not owner.strip():
+        raise ToolError("owner should not be empty.")
 
     ticket_id = max(TICKETS) + 1
 
