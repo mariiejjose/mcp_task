@@ -42,10 +42,29 @@ async def answer(openrouter: AsyncOpenAI, mcp: Client, tools: list[dict], histor
             tools = tools,
         )
         message = response.choices[0].message
-        history.append(message)
 
         if not message.tool_calls:
+            history.append({
+                "role": "assistant",
+                "content": message.content or "",
+            })
+
             return message.content or ""
+
+        history.append({
+            "role": "assistant",
+            "content": message.content,
+            "tool_calls": [{
+                "id": call.id,
+                "type": "function",
+                "function":{
+                    "name": call.function.name,
+                    "arguments": call.function.arguments,
+                },
+                }for call in message.tool_calls
+            ],
+        })
+        
 
         for call in message.tool_calls:
             args = json.loads(call.function.arguments)
@@ -79,13 +98,16 @@ async def main():
         for tool in mcp_tools:
             print(f"-{tool.name}")
 
-        history = [{
+        history = []
+        while True:
+            user_message = input("You: ")
+            history.append({
             "role": "user", 
-            "content": "what is the status of ticket 1002, and what does the FAQ say about VPN"
-        }]
-        reply = await answer(openrouter, mcp, tools, history)
+            "content": user_message,
+            })
+            reply = await answer(openrouter, mcp, tools, history)
 
-        print("assistant: ", reply)
+            print("assistant: ", reply)
 
 if __name__ == "__main__":
     asyncio.run(main())
