@@ -77,7 +77,7 @@ async def main():
         print("Discovered tools:")
 
         for tool in mcp_tools:
-            print(f"- {tool.name}")
+            print(f"-{tool.name}")
 
         history = [{
             "role": "user", 
