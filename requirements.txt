@@ -1,4 +1,4 @@
 mcp[cli]
-google-genai
+openai
 pytest
 python-dotenv
