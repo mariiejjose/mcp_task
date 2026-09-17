@@ -4,14 +4,13 @@ from typing import Literal
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
+from mcp.types import ToolAnnotations
 
 
 mcp = MCPServer(
     "helpdesk",
     instructions="IT helpdesk tools for employees."
 )
-
-
 FAQ = {
     "vpn": (
         "Install GlobalConnect from the Software Center, "
@@ -53,7 +52,7 @@ Status = Literal["open", "in_progress", "closed", "all"]
 def log(msg: str) -> None:
     print(f"[helpdesk] {msg}", file=sys.stderr)
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 def search_faq(query: str) -> str:
     """Search the IT FAQ. Use this first for how-to questions (VPN, password, printer, wifi)."""
 
@@ -80,7 +79,7 @@ def create_ticket(title: str, owner: str, priority: Literal["low", "medium", "hi
     return (f"Created ticket #{ticket_id} ({priority}) for {owner}: {title}"
     )
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 def get_ticket(ticket_id: int) -> str:
     """Get the details and current status of one ticket by its ID."""
 
@@ -91,7 +90,7 @@ def get_ticket(ticket_id: int) -> str:
 
     return f"#{ticket_id}: " + ", ".join(f"{key}={value}" for key, value in ticket.items())
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
 def close_ticket(ticket_id: int, resolution: str) -> str:
     """Close an IT support ticket and store the resolution."""
 
@@ -110,7 +109,7 @@ def close_ticket(ticket_id: int, resolution: str) -> str:
     return f"Closed ticket #{ticket_id}: {resolution}"
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 def list_tickets(status: Status = "all") -> str:
     """List tickets, optionally filtered by status."""
 
@@ -122,7 +121,7 @@ def list_tickets(status: Status = "all") -> str:
     ]
     return "\n".join(rows) or "No tickets match."
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))
 def my_ticket(owner: str) -> str:
     """List all IT support tickets for one employee."""
 
@@ -141,7 +140,6 @@ def policies() -> str:
         "Low: 3 business days."
     )
 
-
 @mcp.resource("helpdesk://tickets/{ticket_id}")
 def ticket_resource(ticket_id: str) -> str:
     """Return one helpdesk ticket as a read-only resource."""
@@ -153,6 +151,15 @@ def ticket_resource(ticket_id: str) -> str:
         return f"Ticket #{ticket_id_int} does not exist"
 
     return f"#{ticket_id_int}: " + ", ".join(f"{key}={value}" for key, value in ticket.items())
+
+@mcp.prompt()
+def triage(problem: str) -> str:
+    """Create a prompt for handling a new IT problem report."""
+
+    return (f"Help traige this IT problem: {problem}. "  
+            "First check whether the FAQ can answer it. "
+            "If the FAQ does not solve the prob, gather the employee name. "
+            "and sugget creatinf a support ticket.")
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")
