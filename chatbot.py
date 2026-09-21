@@ -91,9 +91,16 @@ async def answer(openrouter: AsyncOpenAI, mcp: Client, tools: list[dict], histor
                                     "The tool was NOT executed and no data was changed.")
                     })
                     continue
-            result = await mcp.call_tool(call.function.name, args)
+            try:
+                result = await mcp.call_tool(call.function.name, args)
+                if result.is_error:
+                    tool_text = f"ERROR: {as_text(result)}"
+                else:
+                    tool_text = as_text(result)
 
-            tool_text = as_text(result)
+            except Exception as e:
+                tool_text = f"ERROR: {str(e)}"
+                
             history.append({
                 "role": "tool",
                 "tool_call_id": call.id,
