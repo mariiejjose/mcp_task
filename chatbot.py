@@ -135,13 +135,16 @@ async def main():
             ),
         }]
         while True:
-            user_message = input("Q: ")
+            user_message = input("Q (type exit/quit to end.): ")
             history.append({
             "role": "user", 
             "content": user_message,
             })
-            reply = await answer(openrouter, mcp, tools, history)
 
+            if user_message.strip().lower() in {"exit", "quit"}:
+                return
+
+            reply = await answer(openrouter, mcp, tools, history)
             print("A: ", reply)
 
 if __name__ == "__main__":
