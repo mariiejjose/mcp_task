@@ -98,16 +98,24 @@ async def main():
         for tool in mcp_tools:
             print(f"-{tool.name}")
 
-        history = []
+        history = [{
+            "role": "system",
+            "content": (
+                "You are an IT helpdesk assistant."
+                "Always check the FAQ before suggesting that a support ticket can be created."
+                "Use the available MCP tools when needed."
+                "Do not invent ticket information."
+            ),
+        }]
         while True:
-            user_message = input("You: ")
+            user_message = input("Q: ")
             history.append({
             "role": "user", 
             "content": user_message,
             })
             reply = await answer(openrouter, mcp, tools, history)
 
-            print("assistant: ", reply)
+            print("A: ", reply)
 
 if __name__ == "__main__":
     asyncio.run(main())
