@@ -100,13 +100,13 @@ async def answer(openrouter: AsyncOpenAI, mcp: Client, tools: list[dict], histor
 
             except Exception as e:
                 tool_text = f"ERROR: {str(e)}"
-                
+
             history.append({
                 "role": "tool",
                 "tool_call_id": call.id,
                 "content": tool_text,
             })
-    return "the tool-use limit waas reached"
+    return "the tool-use limit was reached"
 
 async def main():
     openrouter = AsyncOpenAI(
