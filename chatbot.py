@@ -4,6 +4,7 @@ from openai import AsyncOpenAI
 from mcp import Client, StdioServerParameters
 from dotenv import load_dotenv
 import json
+import sys
 
 load_dotenv()
 
@@ -78,7 +79,7 @@ async def answer(openrouter: AsyncOpenAI, mcp: Client, tools: list[dict], histor
             args = json.loads(call.function.arguments)
 
             print(f"Calling tool: {call.function.name} "
-                  f"with {call.function.arguments} ")
+                  f"with {call.function.arguments} ", file = sys.stderr, )
 
             if call.function.name in NEEDS_CONFIRMATION:
                 confirmed = confirmation(call.function.name, args, )
