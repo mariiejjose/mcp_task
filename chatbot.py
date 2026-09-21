@@ -30,6 +30,14 @@ def as_text(result) -> str:
 
     return "\n".join(block.text for block in result.content if block.type == "text")
 
+def confirmation(tool_name: str, args: dict) -> bool:
+    """Ask the user before running a tool that changes data."""
+    print(f"\nGemini wants to run: {tool_name}")
+    print(f"Arguments: {args}")
+
+    answer = input("Allow this action? (y/n): ").strip().lower()
+    return answer in {"y", "yes"}
+
 async def answer(openrouter: AsyncOpenAI, mcp: Client, tools: list[dict], history: list) -> str:
     """The tool-use loop for ONE user message.
         Stop after MAX_TOOL_ROUNDS rounds. Return Gemini's final text.
@@ -72,6 +80,17 @@ async def answer(openrouter: AsyncOpenAI, mcp: Client, tools: list[dict], histor
             print(f"Calling tool: {call.function.name} "
                   f"with {call.function.arguments} ")
 
+            if call.function.name in NEEDS_CONFIRMATION:
+                confirmed = confirmation(call.function.name, args, )
+
+                if not confirmed: 
+                    history.append({
+                        "role": "tool",
+                        "tool_call_id": call.id,
+                        "content": ("ERROR: The user rejected this action."
+                                    "The tool was NOT executed and no data was changed.")
+                    })
+                    continue
             result = await mcp.call_tool(call.function.name, args)
 
             tool_text = as_text(result)
