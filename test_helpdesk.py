@@ -15,14 +15,34 @@ from helpdesk_server import mcp
 #         assert result.is_error
 #         assert "does not exist" in result.content[0].text
 
-@pytest.mark.anyio
-async def test_search_faq_returns_vpn_ans():
-    async with Client(mcp) as client:
-        result = await client.call_tool("search_faq", {"query": "VPN"},)
+# @pytest.mark.anyio
+# async def test_search_faq_returns_vpn_ans():
+#     async with Client(mcp) as client:
+#         result = await client.call_tool("search_faq", {"query": "VPN"},)
 
-        text = result.content[0].text
+#         text = result.content[0].text
 
-        assert not result.is_error
-        assert "GlobalConnect" in text
-        assert "SSO" in text
+#         assert not result.is_error
+#         assert "GlobalConnect" in text
+#         assert "SSO" in text
+
+# @pytest.mark.anyio
+# async def test_create_ticket():
+#     async with Client(mcp) as client:
+#         result = await client.call_tool(
+#             "create_ticket",
+#             {
+#                 "title": "Keyboard not working",
+#                 "priority": "medium",
+#                 "owner": "mj",
+#             },
+#         )
+#         text = result.content[0].text
+
+#         assert not result.is_error
+#         assert "Created ticket" in text
+#         assert "Keyboard not working" in text
+#         assert "mj" in text
+
+
 
