@@ -146,6 +146,9 @@ async def main():
                 "Always check the FAQ before suggesting that a support ticket can be created."
                 "Use the available MCP tools when needed."
                 "Do not invent ticket information."
+                "Use the conversation history and previous tool results to resolve references"
+                "such as 'it', 'that ticket', 'the first one' or 'the second one'."
+                "Do not ask the user to repeat information that is already avaiable in the conversation."
             ),
         }]
         while True:
