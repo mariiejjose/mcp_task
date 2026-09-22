@@ -1,6 +1,6 @@
 import asyncio
 import os
-from openai import AsyncOpenAI
+from openai import (AsyncOpenAI, RateLimitError, APIConnectionError, APIError)
 from mcp import Client, StdioServerParameters
 from dotenv import load_dotenv
 import json
@@ -45,11 +45,25 @@ async def answer(openrouter: AsyncOpenAI, mcp: Client, tools: list[dict], histor
         Catch errors.APIError and return a friendly message.
     """
     for _ in range(MAX_TOOL_ROUNDS):
-        response = await openrouter.chat.completions.create(
-            model = MODEL,
-            messages = history,
-            tools = tools,
-        )
+
+        for attempt in range(3):
+            try: 
+                response = await openrouter.chat.completions.create(
+                    model = MODEL,
+                    messages = history,
+                    tools = tools,
+                )
+                break
+            except RateLimitError:
+                if attempt == 2:
+                    return "The AI service is busy right now. Please try again later."
+
+                await asyncio.sleep(2)
+
+            except (APIConnectionError, APIError):
+                return "The AI service is currently unavailable. Please try agaun later."
+
+            
         message = response.choices[0].message
 
         if not message.tool_calls:
