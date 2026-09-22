@@ -139,6 +139,12 @@ async def main():
         for tool in mcp_tools:
             print(f"-{tool.name}")
 
+        mcp_prompts = (await mcp.list_prompts()).prompts
+        print("Discovered prompts: ")
+
+        for prompt in mcp_prompts:
+            print(f"-{prompt.name}")
+
         history = [{
             "role": "system",
             "content": (
@@ -152,7 +158,7 @@ async def main():
             ),
         }]
         while True:
-            user_message = input("Q (type exit/quit to end.): ")
+            user_message = input("Q (type exit/quit to end.):")
             history.append({
             "role": "user", 
             "content": user_message,
@@ -161,8 +167,20 @@ async def main():
             if user_message.strip().lower() in {"exit", "quit"}:
                 return
 
+            if user_message.startswith("/triage "):
+                problem = user_message[len("/traige"):].strip()
+
+                prompt_result = await mcp.get_prompt("triage", {"problem": problem},)
+                prompt_text = prompt_result.messages[0].content.text
+
+                history.append({"role": "user", "content": prompt_text})
+                reply = await answer(openrouter, mcp, tools, history, )
+
+                print("A:", reply)
+                continue
+
             reply = await answer(openrouter, mcp, tools, history)
-            print("A: ", reply)
+            print("A:", reply)
 
 if __name__ == "__main__":
     asyncio.run(main())
