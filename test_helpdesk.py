@@ -1,6 +1,7 @@
 import pytest
 from mcp import Client
 from helpdesk_server import mcp
+import re
 
 # @pytest.mark.anyio
 # async def test_lists_expected_tools():
@@ -44,5 +45,31 @@ from helpdesk_server import mcp
 #         assert "Keyboard not working" in text
 #         assert "mj" in text
 
+@pytest.mark.anyio
+async def test_close_ticket():
+    async with Client(mcp) as client:
 
+        create_result = await client.call_tool(
+            "create_ticket",
+            {
+                "title": "Mouse not working",
+                "priority": "low",
+                "owner": "mj",
+            },
+        )
+        create_text = create_result.content[0].text
+
+        ticket_id = int(re.search(r"#(\d+)", create_text).group(1))
+        close_result = await client.call_tool(
+            "close_ticket",
+            {
+                "ticket_id": ticket_id,
+                "resolution": "Mouse was replaced",
+            },
+        )
+        close_text = close_result.content[0].text
+
+        assert not close_result.is_error
+        assert "Closed ticket" in close_text
+        assert "Mouse was replaced" in close_text
 
