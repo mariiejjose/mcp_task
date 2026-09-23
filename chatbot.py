@@ -1,16 +1,17 @@
 import asyncio
 import os
 from openai import (AsyncOpenAI, RateLimitError, APIConnectionError, APIError)
-from mcp import Client, StdioServerParameters
+from mcp import Client
 from dotenv import load_dotenv
 import json
 import sys
+from mcp.types import ElicitRequestFormParams, ElicitResult
 
 load_dotenv()
 
 MODEL = "google/gemini-2.5-flash"
 MAX_TOOL_ROUNDS = 10
-NEEDS_CONFIRMATION = {"create_ticket", "close_ticket"}
+NEEDS_CONFIRMATION = {"create_ticket"}
 
 def to_gemini_tools(mcp_tools) -> list[dict]:
     """Convert MCP tool objects into Gemini function declarations."""
@@ -123,14 +124,25 @@ async def answer(openrouter: AsyncOpenAI, mcp: Client, tools: list[dict], histor
             })
     return "the tool-use limit was reached"
 
+async def handle_elicitation(ctx, params):
+    if isinstance(params, ElicitRequestFormParams):
+        print(f"\nServer asks: {params.message}")
+
+        answer = input("Confirm? (y/n): ").strip().lower()
+
+        if answer in {"y", "yes"}:
+            return ElicitResult(action="accept", content={"confirm": True},)
+
+        return ElicitResult(action="decline",)
+
 async def main():
     openrouter = AsyncOpenAI(
         base_url = "https://openrouter.ai/api/v1",
         api_key = os.getenv("OPENROUTER_API_KEY"),
     )
-    server = StdioServerParameters(command="python", args=["helpdesk_server.py"],)
+    server = "http://127.0.0.1:8000/mcp"
 
-    async with Client(server) as mcp:
+    async with Client(server, elicitation_callback=handle_elicitation, mode="legacy",) as mcp:
         mcp_tools = (await mcp.list_tools()).tools
         tools = to_gemini_tools(mcp_tools)
         
