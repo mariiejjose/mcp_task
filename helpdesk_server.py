@@ -8,6 +8,9 @@ from mcp.types import ToolAnnotations
 
 import sqlite3
 
+from pydantic import BaseModel
+from mcp.server.mcpserver import Context
+
 
 mcp = MCPServer(
     "helpdesk",
@@ -15,6 +18,9 @@ mcp = MCPServer(
 )
 
 DATABASE = "helpdesk.db"
+
+class CloseConfirmation(BaseModel):
+    confirm: bool
 
 def init_db():
     connection = sqlite3.connect(DATABASE)
@@ -171,7 +177,7 @@ def get_ticket(ticket_id: int) -> str:
 
 
 @mcp.tool(annotations=ToolAnnotations(destructive_hint=True))
-def close_ticket(ticket_id: int, resolution: str) -> str:
+async def close_ticket(ticket_id: int, resolution: str, ctx: Context) -> str:
     """Close an IT support ticket and store the resolution."""
 
     connection = sqlite3.connect(DATABASE)
@@ -190,6 +196,16 @@ def close_ticket(ticket_id: int, resolution: str) -> str:
     if ticket["status"] == "closed":
         connection.close()
         return f"Ticket #{ticket_id} is already closed."
+
+    result = await ctx.elicit(
+        message = f"Are you sure you want to close the ticket #{ticket_id}?",
+        schema = CloseConfirmation,
+    )
+    if result.action != "accept":
+        return f"Closing ticket #{ticket_id} was cancelled."
+
+    if not result.data.confirm:
+        return f"Closing ticket #{ticket_id} was cancelled."
 
     cursor.execute(
         """
@@ -321,7 +337,7 @@ def triage(problem: str) -> str:
 if __name__ == "__main__":
     init_db()
     insert_ticket_db()
-    mcp.run(transport="stdio")
+    mcp.run(transport="streamable-http", host="127.0.0.1", port=8000,)
 
 #Command: C:/Users/mjmarie/Desktop/MCP_TASK/.venv/Scripts/python.exe
 #Arguments: C:/Users/mjmarie/Desktop/MCP_TASK/helpdesk_server.py
